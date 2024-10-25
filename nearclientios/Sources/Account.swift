@@ -193,6 +193,45 @@ public final class Account {
     // TODO: deal with timeout on node side.
     return result
   }
+    
+  public func sign(transaction: CodableTransaction) async throws -> ([UInt8], SignedTransaction) {
+      guard let publicKey = try await connection.signer.getPublicKey(accountId: accountId, networkId: connection.networkId) else {
+        throw SignError.noPublicKey
+      }
+      let message = try BorshEncoder().encode(transaction)
+      let hash = message.digest
+      let signature = try await connection.signer.signMessage(message: message.bytes, accountId: accountId, networkId: connection.networkId)
+      
+      let signedTx = SignedTransaction(transaction: transaction, signature: CodableSignature(signature: signature.signature, curve: publicKey.keyType))
+      return (hash, signedTx)
+  }
+    
+  public func sendTransaction(signedTx: SignedTransaction) async throws -> FinalExecutionOutcome {
+      let message = try BorshEncoder().encode(signedTx.transaction)
+      let txHash = message.digest
+      let outcome: FinalExecutionOutcome?
+      do {
+        outcome = try await connection.provider.sendTransaction(signedTransaction: signedTx)
+      } catch let error {
+        if let transactionError = error as? TransactionError, transactionError.error.cause.name == "TIMEOUT_ERROR" {
+          outcome = try await retryTxResult(txHash: txHash, accountId: accountId)
+        } else {
+          throw error
+        }
+      }
+      
+      guard let result = outcome else {throw AccountError.noResult}
+      let flatLogs = ([result.transactionOutcome] + result.receiptsOutcome).reduce([], {$0 + $1.outcome.logs})
+      printLogs(contractId: signedTx.transaction.receiverId, logs: flatLogs)
+      
+      if case .failure(let error) = result.status {
+        throw TypedError.error(type: "Transaction \(result.transactionOutcome.id) failed. \(error.errorMessage ?? "")",
+                               message: error.errorType)
+      }
+      // TODO: if Tx is Unknown or Started.
+      // TODO: deal with timeout on node side.
+      return result
+  }
   
   public func signAndSendTransactionAsync(receiverId: String, actions: [Action]) async throws -> SimpleRPCResult {
     try await ready()
