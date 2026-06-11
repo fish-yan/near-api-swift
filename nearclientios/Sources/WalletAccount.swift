@@ -8,7 +8,6 @@
 
 import Foundation
 import UIKit
-import KeychainAccess
 
 public let APP_SCHEME = "x-nearclientios"
 
@@ -42,8 +41,6 @@ public protocol WalletStorage: AnyObject {
 
 public let WALLET_STORAGE_SERVICE = "nearlib.wallet"
 
-extension Keychain: WalletStorage {}
-
 public protocol ExternalAuthService {
   func openURL(_ url: URL, presentingViewController: UIViewController) -> Bool
 }
@@ -58,7 +55,7 @@ public actor WalletAccount {
   private let authService: ExternalAuthService
 
   public init(near: Near, authService: ExternalAuthService, appKeyPrefix: String? = nil,
-       storage: WalletStorage = Keychain(service: WALLET_STORAGE_SERVICE)) throws {
+       storage: WalletStorage) throws {
     let keyPrefix = appKeyPrefix ?? (near.config.contractName ?? "default")
     let authDataKey = keyPrefix + LOCAL_STORAGE_KEY_SUFFIX
     guard let keyStore = (near.connection.signer as? InMemorySigner)?.keyStore else {throw WalletAccountError.noKeyStore}
