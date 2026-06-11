@@ -17,11 +17,10 @@ let package = Package(
     ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
-        .package(url: "https://github.com/kishikawakatsumi/KeychainAccess.git", from: "4.2.2"),
         .package(url: "https://github.com/bitmark-inc/tweetnacl-swiftwrap.git", from: "1.1.0"),
         .package(url: "https://github.com/Flight-School/AnyCodable.git", from: "0.6.0"),
-        .package(url: "https://github.com/keefertaylor/Base58Swift.git", from: "2.1.0"),
-        .package(url: "https://github.com/21-DOT-DEV/swift-secp256k1", .upToNextMinor(from: "0.10.0"))
+        .package(url: "https://github.com/21-DOT-DEV/swift-secp256k1", .upToNextMinor(from: "0.10.0")),
+        .package(url: "https://github.com/attaswift/BigInt.git", from: "5.0.0")
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
@@ -29,10 +28,9 @@ let package = Package(
         .target(
             name: "nearclientios",
             dependencies: [
-                "KeychainAccess",
+                "BigInt",
                 .product(name: "TweetNacl", package: "tweetnacl-swiftwrap"),
                 "AnyCodable",
-                "Base58Swift",
                 .product(name: "secp256k1", package: "swift-secp256k1"),
             ],
             path: "./nearclientios/Sources"

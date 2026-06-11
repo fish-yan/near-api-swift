@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import Base58Swift
 
 public extension String {
   var baseDecoded: [UInt8] {

@@ -135,22 +135,6 @@ public extension Near {
 
 func connect(config: NearConfigProtocol) async throws -> Near {
     // Try to find extra key in `KeyPath` if provided.let
-  var configuration = config
-  if let keyPath = configuration.keyPath, let keyStore = configuration.keyStore {
-    do {
-      let (accountId, keyPair) = try await UnencryptedFileSystemKeyStore.readKeyFile(path: keyPath)
-      // TODO: Only load key if network ID matches
-      let keyPathStore = InMemoryKeyStore()
-      try await keyPathStore.setKey(networkId: configuration.networkId, accountId: accountId, keyPair: keyPair)
-      if configuration.masterAccount == nil {
-        configuration.masterAccount = accountId
-      }
-      configuration.keyStore = MergeKeyStore(keyStores: [keyStore, keyPathStore])
-      print("Loaded master account \(accountId) key from \(keyPath) with public key = \(keyPair.getPublicKey())")
-    } catch let error {
-      print("Failed to load master account key from \(keyPath): \(error)")
-    }
-  }
-  let near = Near(config: configuration)
+  let near = Near(config: config)
   return near
 }
